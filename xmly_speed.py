@@ -24,8 +24,9 @@ import traceback
 cookies1 = ''
 cookies2 = ''
 cookiesList = [cookies1, cookies2]  # 多账号准备
-XMLY_ACCUMULATE_TIME = 1    # 希望刷时长的,此处置1
+XMLY_ACCUMULATE_TIME = 0    # 希望刷时长的,此处置1
 bark_machine_code = ''  # 填写bark机器码
+maximum_duration = 1200
 
 # 使用方案1：GitHub action自动运行,此处无需填写;
 if "XMLY_SPEED_COOKIE" in os.environ:
@@ -44,6 +45,19 @@ if "XMLY_SPEED_COOKIE" in os.environ:
     if "XMLY_ACCUMULATE_TIME" in os.environ and os.environ["XMLY_ACCUMULATE_TIME"] == 'zero_s1':
         XMLY_ACCUMULATE_TIME = 1
         print('action 自动刷时长打开')
+    try:
+        if "MAXIMUM_DURATION" in os.environ and os.environ["MAXIMUM_DURATION"] != '':
+            maximum_duration = int(os.environ['MAXIMUM_DURATION'])
+#             print('1时长限制：%d' % maximum_duration)
+#             print(traceback.format_exc())
+        else:
+            maximum_duration = 1200
+#             print('2时长限制：%d' % maximum_duration)
+#             print(traceback.format_exc())
+    except:
+        maximum_duration = 1200
+    print('时长限制：%d' % maximum_duration)
+#         print(traceback.format_exc())
 
 UserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 iting/1.0.12 kdtunion_iting/1.0 iting(main)/1.0.12/ios_1"
 
@@ -595,24 +609,27 @@ def saveListenTime(cookies):
     }
     listentime = date_stamp
     print(f"上传本地收听时长1: {listentime//60}分钟")
-    currentTimeMillis = int(time.time()*1000)-2
-    uid = get_uid(cookies)
-    sign = hashlib.md5(
-        f'currenttimemillis={currentTimeMillis}&listentime={listentime}&uid={uid}&23627d1451047b8d257a96af5db359538f081d651df75b4aa169508547208159'.encode()).hexdigest()
-    data = {
-        'activtyId': 'listenAward',
-        'currentTimeMillis': currentTimeMillis,
-        'listenTime': str(listentime),
-        'nativeListenTime': str(listentime),
-        'signature': sign,
-        'uid': uid
-    }
-    try:
-        response = requests.post('http://mobile.ximalaya.com/pizza-category/ball/saveListenTime',
-                                 headers=headers, cookies=cookies, data=data)
-        print(response.text)
-    except:
-        print(traceback.format_exc())
+    if listentime//60 >= int(maximum_duration) or 1 < bj_dt.hour < 6 or 12 < bj_dt.hour < 15 or 20 < bj_dt.hour < 23:
+        print('已到达设置时长,将不再刷时长')
+    else:
+        currentTimeMillis = int(time.time()*1000)-2
+        uid = get_uid(cookies)
+        sign = hashlib.md5(
+            f'currenttimemillis={currentTimeMillis}&listentime={listentime}&uid={uid}&23627d1451047b8d257a96af5db359538f081d651df75b4aa169508547208159'.encode()).hexdigest()
+        data = {
+            'activtyId': 'listenAward',
+            'currentTimeMillis': currentTimeMillis,
+            'listenTime': str(listentime),
+            'nativeListenTime': str(listentime),
+            'signature': sign,
+            'uid': uid
+        }
+        try:
+            response = requests.post('http://mobile.ximalaya.com/pizza-category/ball/saveListenTime',
+                                     headers=headers, cookies=cookies, data=data)
+            print(response.text)
+        except:
+            print(traceback.format_exc())
 
 def listenData(cookies):
     print("\n【刷时长2】")
@@ -623,22 +640,25 @@ def listenData(cookies):
     }
     listentime = date_stamp
     print(f"上传本地收听时长2: {listentime//60}分钟")
-    currentTimeMillis = int(time.time()*1000)-2
-    uid = get_uid(cookies)
-    sign = hashlib.md5(
-        f'currenttimemillis={currentTimeMillis}&listentime={listentime}&uid={uid}&23627d1451047b8d257a96af5db359538f081d651df75b4aa169508547208159'.encode()).hexdigest()
-    data = {
-        'currentTimeMillis': currentTimeMillis,
-        'listenTime': str(listentime),
-        'signature': sign,
-        'uid': uid
-    }
-    try:
-        response = requests.post('http://m.ximalaya.com/speed/web-earn/listen/client/data',
-                                 headers=headers, cookies=cookies, data=json.dumps(data))
-        print(response.text)
-    except:
-        print(traceback.format_exc())
+    if listentime//60 >= int(maximum_duration) or 1 < bj_dt.hour < 6 or 12 < bj_dt.hour < 15 or 20 < bj_dt.hour < 23:
+        print('已到达设置时长,将不再刷时长')
+    else:
+        currentTimeMillis = int(time.time()*1000)-2
+        uid = get_uid(cookies)
+        sign = hashlib.md5(
+            f'currenttimemillis={currentTimeMillis}&listentime={listentime}&uid={uid}&23627d1451047b8d257a96af5db359538f081d651df75b4aa169508547208159'.encode()).hexdigest()
+        data = {
+            'currentTimeMillis': currentTimeMillis,
+            'listenTime': str(listentime),
+            'signature': sign,
+            'uid': uid
+        }
+        try:
+            response = requests.post('http://m.ximalaya.com/speed/web-earn/listen/client/data',
+                                     headers=headers, cookies=cookies, data=json.dumps(data))
+            print(response.text)
+        except:
+            print(traceback.format_exc())
 
 
 def card_exchangeCoin(cookies, themeId, cardIdList):
@@ -845,7 +865,7 @@ def main():
         read(cookies, uid)  # 阅读
         bubble(cookies)  # 收金币气泡
         checkin(cookies)  # 自动签到
-        lottery_info(cookies)  # 大转盘4次
+        # lottery_info(cookies)  # 大转盘4次
         answer(cookies)      # 答题赚金币
         cardReportTime(cookies)  # 卡牌
         getOmnipotentCard(cookies)  # 领取万能卡
